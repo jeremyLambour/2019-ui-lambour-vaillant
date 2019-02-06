@@ -1,0 +1,3 @@
+type page =
+  | Login
+  | Register;
