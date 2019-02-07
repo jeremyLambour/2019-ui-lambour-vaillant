@@ -1,14 +1,36 @@
-type action =
-  | Login
-  | Register
-  | UpdateEmailField(string)
-  | UpdatePasswordField(string);
-
 type state = {
   email: string,
   password: string,
 };
+type action =
+  | Login
+  | UpdateEmailField(string)
+  | UpdatePasswordField(string)
+  | LoggedIn(state)
+  | NotLoggedIn;
 
+let login = user => {
+  let payload = Js.Dict.empty();
+  Js.Dict.set(payload, "email", Js.Json.string(user.email));
+  Js.Dict.set(payload, "password", Js.Json.string(user.password));
+  Js.Promise.(
+    Fetch.fetchWithInit(
+      "http://localhost:8080/api/v1/users/login",
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=
+          Fetch.BodyInit.make(Js.Json.stringify(Js.Json.object_(payload))),
+        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+        (),
+      ),
+    )
+    |> then_(Fetch.Response.json)
+    |> then_(json =>
+         Json.Decode.{email: field("email", string, json), password: ""}
+         |> (users => Some(users) |> resolve)
+       )
+  );
+};
 let component = ReasonReact.reducerComponent("Login");
 
 let make = _children => {
@@ -17,9 +39,20 @@ let make = _children => {
   reducer: (action, state) =>
     switch (action) {
     | Login =>
-      ReasonReact.Update({email: state.email, password: state.password})
-    | Register =>
-      ReasonReact.Update({email: state.email, password: state.password})
+      ReasonReact.UpdateWithSideEffects(
+        state,
+        self =>
+          Js.Promise.(
+            login(state)
+            |> then_(result =>
+                 switch (result) {
+                 | Some(user) => resolve(self.send(LoggedIn(user)))
+                 | None => resolve(self.send(NotLoggedIn))
+                 }
+               )
+            |> ignore
+          ),
+      )
     | UpdateEmailField(email) => ReasonReact.Update({...state, email})
     | UpdatePasswordField(password) =>
       ReasonReact.Update({...state, password})
