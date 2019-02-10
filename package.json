@@ -32,6 +32,7 @@
   "dependencies": {
     "@glennsl/bs-json": "^3.0.0",
     "bs-fetch": "^0.3.1",
+    "bs-react-bootstrap": "^0.1.0",
     "compression": "^1.7.3",
     "express": "^4.16.4",
     "helmet": "^3.15.0",

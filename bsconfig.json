@@ -17,7 +17,12 @@
   },
   "suffix": ".bs.js",
   "reason": { "react-jsx": 2 },
-  "bs-dependencies": ["reason-react", "bs-fetch", "@glennsl/bs-json"],
+  "bs-dependencies": [
+    "reason-react",
+    "bs-fetch",
+    "@glennsl/bs-json",
+    "bs-react-bootstrap"
+  ],
   "bs-dev-dependencies": ["@glennsl/bs-jest"],
   "warnings": {
     "error": "+101"

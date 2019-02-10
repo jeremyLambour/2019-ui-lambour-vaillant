@@ -1,5 +1,4 @@
 open Mapper;
-let str = ReasonReact.string;
 
 type state = {route: page};
 type action =
@@ -27,8 +26,7 @@ let make = _children => {
       {switch (self.state.route) {
        | Login => <Login />
        | Register => <Register />
+       | Score => <Score />
        }}
-      <a href="login"> {str("login")} </a>
-      <a href="register"> {str("register")} </a>
     </div>,
 };
