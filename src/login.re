@@ -56,7 +56,7 @@ let make = _children => {
             login(state)
             |> then_(result =>
                  switch (result) {
-                 | Some(user) => user |> resolve(self.send(LoggedIn))
+                 | Some(user) => resolve(self.send(LoggedIn))
                  }
                )
             |> catch(_err => Js.Promise.resolve(self.send(NotLoggedIn("Error : Bad credentials"))))
