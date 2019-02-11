@@ -20,6 +20,6 @@ module Mapper: Mapper = {
     switch (page) {
     | Register => "register"
     | Score => "score"
-    | _ => "login"
+    | Login => "login"
     };
 };

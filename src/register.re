@@ -1,28 +1,77 @@
-type action =
-  | Register
-  | UpdateEmailField(string)
-  | UpdatePasswordField(string);
+open Decoder;
 
+let url_dev = "http://localhost:8080/";
 type state = {
   email: string,
   password: string,
 };
-let str = ReasonReact.string;
+
+type action =
+  | UpdateEmailField(string)
+  | UpdatePasswordField(string)
+  | Register
+  | Registered
+  | RegisteredFailed;
+
 let component = ReasonReact.reducerComponent("Register");
+
+let register = state => {
+  let payload = Js.Dict.empty();
+  Js.Dict.set(payload, "email", Js.Json.string(state.email));
+  Js.Dict.set(payload, "password", Js.Json.string(state.password));
+  Js.Promise.(
+    Fetch.fetchWithInit(
+      url_dev ++ "api/v1/users/",
+      Fetch.RequestInit.make(
+        ~method_=Post,
+        ~body=
+          Fetch.BodyInit.make(
+            Js.Json.stringify(Js.Json.object_(payload)),
+          ),
+        ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
+        (),
+      ),
+    )
+    |> then_(Fetch.Response.json)
+    |> then_(json =>
+         json |> Decoder.decodeResponse |> (user => Some(user) |> resolve)
+       )
+  );
+};
 
 let make = _children => {
   ...component,
   initialState: () => {email: "", password: ""},
   reducer: (action, state) =>
     switch (action) {
-    | Register =>
-      ReasonReact.Update({email: state.email, password: state.password})
     | UpdateEmailField(email) => ReasonReact.Update({...state, email})
-    | UpdatePasswordField(password) =>
-      ReasonReact.Update({...state, password})
+    | UpdatePasswordField(password) => ReasonReact.Update({...state, password})
+    | Register =>
+      ReasonReact.UpdateWithSideEffects(
+        state,
+        self =>
+          Js.Promise.(
+            register(state)
+            |> then_(result =>
+                 switch (result) {
+                 | Some(user) => resolve(self.send(Registered))
+                 }
+               )
+            |> catch(_err => {
+                 Js.log(_err);
+                 Js.Promise.resolve(self.send(RegisteredFailed));
+               })
+            |> ignore
+          ),
+      )
+    | Registered =>
+      ReasonReact.SideEffects(_ => ReasonReact.Router.push("score"))
+    | RegisteredFailed =>
+      ReasonReact.SideEffects(_ => ReasonReact.Router.push("errorRegister"))
+    | _ => ReasonReact.NoUpdate
     },
   render: self =>
-    <div className="align-middle mx-auto w-50 p-3 text-center">
+ <div className="align-middle mx-auto w-50 p-3 text-center">
       <form>
         <div className="card-header"> {ReasonReact.string("Register")} </div>
         <div className="card-body">
@@ -51,21 +100,21 @@ let make = _children => {
               }
               placeholder="password"
             />
-          </div>
-          <div className="justify-content-center">
+          </div>  
+        </div>
+      </form>
+       <div className="
+          card-footer text-muted">
+          <label> {ReasonReact.string("Deja un compte ?")} </label>
+          <a href="login"> {ReasonReact.string("Se connecter")} </a>
+        </div>
+         <div className="justify-content-center">
             <button
               className="btn btn-outline-primary"
               onClick={_ => self.send({Register})}>
               {ReasonReact.string("S'enregistrer")}
             </button>
           </div>
-        </div>
-        <div className="
-          card-footer text-muted">
-          <label> {ReasonReact.string("Deja un compte ?")} </label>
-          <a href="login"> {str("Se connecter")} </a>
-        </div>
-      </form>
       <div> {ReasonReact.string(self.state.email)} </div>
       <div> {ReasonReact.string(self.state.password)} </div>
     </div>,
