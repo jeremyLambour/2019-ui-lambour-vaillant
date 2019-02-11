@@ -1,9 +1,10 @@
 open Decoder;
-
+open SessionUser;
 let url_dev = "http://localhost:8080/";
 type state = {
   email: string,
   password: string,
+  error: string
 };
 
 type action =
@@ -11,7 +12,7 @@ type action =
   | UpdatePasswordField(string)
   | Login
   | LoggedIn
-  | NotLoggedIn
+  | NotLoggedIn(string)
 
 let login = state => {
   let payload = Js.Dict.empty();
@@ -42,7 +43,7 @@ let component = ReasonReact.reducerComponent("login");
 
 let make = _children => {
   ...component,
-  initialState: () => {email: "", password: ""},
+  initialState: () => {email: "", password: "",error:""},
   reducer: (action, state) =>
     switch (action) {
     | UpdateEmailField(email) => ReasonReact.Update({...state, email})
@@ -55,18 +56,17 @@ let make = _children => {
             login(state)
             |> then_(result =>
                  switch (result) {
-                 | Some(user) => resolve(self.send(LoggedIn))
-                 | None => resolve(self.send(NotLoggedIn))
+                 | Some(user) => user |> resolve(self.send(LoggedIn))
                  }
                )
-            |> catch(_err => Js.Promise.resolve(self.send(NotLoggedIn)))
+            |> catch(_err => Js.Promise.resolve(self.send(NotLoggedIn("Error : Bad credentials"))))
             |> ignore
           ),
       )
     | LoggedIn =>
       ReasonReact.SideEffects(_ => ReasonReact.Router.push("score"))
-    | NotLoggedIn =>
-      ReasonReact.SideEffects(_ => ReasonReact.Router.push("errorCo"))
+    | NotLoggedIn(error) =>
+      ReasonReact.Update({...state, error})
     | _ => ReasonReact.NoUpdate
     },
   render: _self =>
@@ -114,5 +114,6 @@ let make = _children => {
           <label> {ReasonReact.string("Pas encore de compte ?")} </label>
           <a href="register"> {ReasonReact.string("S'inscrire")} </a>
         </div>
+         <label> {ReasonReact.string(_self.state.error)} </label>
     </div>,
 };

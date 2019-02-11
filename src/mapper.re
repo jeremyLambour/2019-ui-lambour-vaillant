@@ -14,7 +14,7 @@ module Mapper: Mapper = {
     | ["register"] => Register
     | ["login"] => Login
     | ["score"] => Score
-    | _ => Login
+    | _ => Register
     };
   let toUrl = page =>
     switch (page) {

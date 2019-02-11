@@ -4,6 +4,7 @@ let url_dev = "http://localhost:8080/";
 type state = {
   email: string,
   password: string,
+  error:string
 };
 
 type action =
@@ -11,7 +12,7 @@ type action =
   | UpdatePasswordField(string)
   | Register
   | Registered
-  | RegisteredFailed;
+  | RegisteredFailed(string);
 
 let component = ReasonReact.reducerComponent("Register");
 
@@ -41,7 +42,7 @@ let register = state => {
 
 let make = _children => {
   ...component,
-  initialState: () => {email: "", password: ""},
+  initialState: () => {email: "", password: "",error:""},
   reducer: (action, state) =>
     switch (action) {
     | UpdateEmailField(email) => ReasonReact.Update({...state, email})
@@ -58,16 +59,14 @@ let make = _children => {
                  }
                )
             |> catch(_err => {
-                 Js.log(_err);
-                 Js.Promise.resolve(self.send(RegisteredFailed));
+                 Js.Promise.resolve(self.send(RegisteredFailed("User not registered")));
                })
             |> ignore
           ),
       )
     | Registered =>
       ReasonReact.SideEffects(_ => ReasonReact.Router.push("score"))
-    | RegisteredFailed =>
-      ReasonReact.SideEffects(_ => ReasonReact.Router.push("errorRegister"))
+    | RegisteredFailed(err) => ReasonReact.Update({...state, error:err})
     | _ => ReasonReact.NoUpdate
     },
   render: self =>
@@ -103,19 +102,19 @@ let make = _children => {
           </div>  
         </div>
       </form>
-       <div className="
-          card-footer text-muted">
-          <label> {ReasonReact.string("Deja un compte ?")} </label>
-          <a href="login"> {ReasonReact.string("Se connecter")} </a>
-        </div>
-         <div className="justify-content-center">
+       <div className="justify-content-center">
             <button
               className="btn btn-outline-primary"
               onClick={_ => self.send({Register})}>
               {ReasonReact.string("S'enregistrer")}
             </button>
           </div>
-      <div> {ReasonReact.string(self.state.email)} </div>
-      <div> {ReasonReact.string(self.state.password)} </div>
+       <div className="
+          card-footer text-muted">
+          <label> {ReasonReact.string("Deja un compte ?")} </label>
+          <a href="login"> {ReasonReact.string("Se connecter")} </a>
+        </div>
+        
+      <div> {ReasonReact.string(self.state.error)} </div>
     </div>,
 };
