@@ -1,10 +1,10 @@
 open Decoder;
 
-let url_dev = "http://localhost:8080/";
+[@bs.val] external url_dev: string = "process.env.BACK_API_URL";
 type state = {
   email: string,
   password: string,
-  error:string
+  error: string,
 };
 
 type action =
@@ -26,9 +26,7 @@ let register = state => {
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=
-          Fetch.BodyInit.make(
-            Js.Json.stringify(Js.Json.object_(payload)),
-          ),
+          Fetch.BodyInit.make(Js.Json.stringify(Js.Json.object_(payload))),
         ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
         (),
       ),
@@ -42,11 +40,12 @@ let register = state => {
 
 let make = _children => {
   ...component,
-  initialState: () => {email: "", password: "",error:""},
+  initialState: () => {email: "", password: "", error: ""},
   reducer: (action, state) =>
     switch (action) {
     | UpdateEmailField(email) => ReasonReact.Update({...state, email})
-    | UpdatePasswordField(password) => ReasonReact.Update({...state, password})
+    | UpdatePasswordField(password) =>
+      ReasonReact.Update({...state, password})
     | Register =>
       ReasonReact.UpdateWithSideEffects(
         state,
@@ -58,19 +57,21 @@ let make = _children => {
                  | Some(user) => resolve(self.send(Registered))
                  }
                )
-            |> catch(_err => {
-                 Js.Promise.resolve(self.send(RegisteredFailed("User not registered")));
-               })
+            |> catch(_err =>
+                 Js.Promise.resolve(
+                   self.send(RegisteredFailed("User not registered")),
+                 )
+               )
             |> ignore
           ),
       )
     | Registered =>
       ReasonReact.SideEffects(_ => ReasonReact.Router.push("score"))
-    | RegisteredFailed(err) => ReasonReact.Update({...state, error:err})
+    | RegisteredFailed(err) => ReasonReact.Update({...state, error: err})
     | _ => ReasonReact.NoUpdate
     },
   render: self =>
- <div className="align-middle mx-auto w-50 p-3 text-center">
+    <div className="align-middle mx-auto w-50 p-3 text-center">
       <form>
         <div className="card-header"> {ReasonReact.string("Register")} </div>
         <div className="card-body">
@@ -99,22 +100,21 @@ let make = _children => {
               }
               placeholder="password"
             />
-          </div>  
+          </div>
         </div>
       </form>
-       <div className="justify-content-center">
-            <button
-              className="btn btn-outline-primary"
-              onClick={_ => self.send({Register})}>
-              {ReasonReact.string("S'enregistrer")}
-            </button>
-          </div>
-       <div className="
+      <div className="justify-content-center">
+        <button
+          className="btn btn-outline-primary"
+          onClick={_ => self.send({Register})}>
+          {ReasonReact.string("S'enregistrer")}
+        </button>
+      </div>
+      <div className="
           card-footer text-muted">
-          <label> {ReasonReact.string("Deja un compte ?")} </label>
-          <a href="login"> {ReasonReact.string("Se connecter")} </a>
-        </div>
-        
+        <label> {ReasonReact.string("Deja un compte ?")} </label>
+        <a href="login"> {ReasonReact.string("Se connecter")} </a>
+      </div>
       <div> {ReasonReact.string(self.state.error)} </div>
     </div>,
 };

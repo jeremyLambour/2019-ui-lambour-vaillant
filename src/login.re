@@ -1,10 +1,11 @@
 open Decoder;
 open SessionUser;
-let url_dev = "http://localhost:8080/";
+[@bs.val] external url_dev: string = "process.env.BACK_API_URL";
+
 type state = {
   email: string,
   password: string,
-  error: string
+  error: string,
 };
 
 type action =
@@ -12,7 +13,7 @@ type action =
   | UpdatePasswordField(string)
   | Login
   | LoggedIn
-  | NotLoggedIn(string)
+  | NotLoggedIn(string);
 
 let login = state => {
   let payload = Js.Dict.empty();
@@ -25,9 +26,7 @@ let login = state => {
       Fetch.RequestInit.make(
         ~method_=Post,
         ~body=
-          Fetch.BodyInit.make(
-            Js.Json.stringify(Js.Json.object_(payload)),
-          ),
+          Fetch.BodyInit.make(Js.Json.stringify(Js.Json.object_(payload))),
         ~headers=Fetch.HeadersInit.make({"Content-Type": "application/json"}),
         (),
       ),
@@ -43,11 +42,12 @@ let component = ReasonReact.reducerComponent("login");
 
 let make = _children => {
   ...component,
-  initialState: () => {email: "", password: "",error:""},
+  initialState: () => {email: "", password: "", error: ""},
   reducer: (action, state) =>
     switch (action) {
     | UpdateEmailField(email) => ReasonReact.Update({...state, email})
-    | UpdatePasswordField(password) => ReasonReact.Update({...state, password})
+    | UpdatePasswordField(password) =>
+      ReasonReact.Update({...state, password})
     | Login =>
       ReasonReact.UpdateWithSideEffects(
         state,
@@ -59,14 +59,17 @@ let make = _children => {
                  | Some(user) => resolve(self.send(LoggedIn))
                  }
                )
-            |> catch(_err => Js.Promise.resolve(self.send(NotLoggedIn("Error : Bad credentials"))))
+            |> catch(_err =>
+                 Js.Promise.resolve(
+                   self.send(NotLoggedIn("Error : Bad credentials")),
+                 )
+               )
             |> ignore
           ),
       )
     | LoggedIn =>
       ReasonReact.SideEffects(_ => ReasonReact.Router.push("score"))
-    | NotLoggedIn(error) =>
-      ReasonReact.Update({...state, error})
+    | NotLoggedIn(error) => ReasonReact.Update({...state, error})
     | _ => ReasonReact.NoUpdate
     },
   render: _self =>
@@ -74,8 +77,8 @@ let make = _children => {
       <form>
         <div className="card-header"> {ReasonReact.string("Login")} </div>
         <div className="card-body">
-        <div className="input-group mb-3">
-        <input
+          <div className="input-group mb-3">
+            <input
               className="form-control"
               type_="text"
               value={_self.state.email}
@@ -87,7 +90,7 @@ let make = _children => {
               }
             />
           </div>
-        <div className="input-group mb-3">
+          <div className="input-group mb-3">
             <input
               className="form-control"
               type_="password"
@@ -103,17 +106,17 @@ let make = _children => {
         </div>
       </form>
       <div className="justify-content-center">
-            <button
-              className="btn btn-outline-primary"
-              onClick={_ => _self.send({Login})}>
-              {ReasonReact.string("Connexion")}
-            </button>
-          </div>
-           <div className="
+        <button
+          className="btn btn-outline-primary"
+          onClick={_ => _self.send({Login})}>
+          {ReasonReact.string("Connexion")}
+        </button>
+      </div>
+      <div className="
           card-footer text-muted">
-          <label> {ReasonReact.string("Pas encore de compte ?")} </label>
-          <a href="register"> {ReasonReact.string("S'inscrire")} </a>
-        </div>
-         <label> {ReasonReact.string(_self.state.error)} </label>
+        <label> {ReasonReact.string("Pas encore de compte ?")} </label>
+        <a href="register"> {ReasonReact.string("S'inscrire")} </a>
+      </div>
+      <label> {ReasonReact.string(_self.state.error)} </label>
     </div>,
 };

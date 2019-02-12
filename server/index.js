@@ -23,11 +23,11 @@ app.use(
 );
 
 // upgrade to https if requested on http
-app.get('*', (req, res, next) => {
-  return !req.secure && process.env.NODE_ENV === 'production'
-    ? res.redirect(308, 'https://' + req.headers.host + req.originalUrl)
-    : next();
-});
+// app.get('*', (req, res, next) => {
+//   return !req.secure && process.env.NODE_ENV === 'production'
+//     ? res.redirect(308, 'https://' + req.headers.host + req.originalUrl)
+//     : next();
+// });
 app.use(express.static(DIST));
 
 app.get('*', (req, res) =>
